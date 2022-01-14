@@ -69,6 +69,53 @@ class threejsViewer {
             this.camera.updateProjectionMatrix();
         })
 
+        let mesh = null
+
+        this.loadData = (paddingData, size, isovalue, selectedTextureIndex) =>{
+            let mesh = this.scene.getObjectByName('mesh');
+            this.textureOption = selectedTextureIndex;
+            if (mesh == null){
+                let mesh = new MarchingCubes(size);
+                mesh.name = 'mesh';
+                if(this.textureOption == 0){
+                    mesh.material = new THREE.MeshPhongMaterial();
+                }else if(this.textureOption == 1){
+                    mesh.material = new THREE.MeshPhongMaterial();
+                }
+                mesh.isolation = isovalue;
+                mesh.field = paddingData;
+                mesh.position.set(0,1,0);
+                this.scene.add(mesh);
+            
+            }else{
+                if(this.textureOption == 0){
+                    mesh.material = new THREE.MeshPhongMaterial();
+                }else if(this.textureOption == 1){
+                    mesh.material = new THREE.MeshPhongMaterial();
+                }
+                mesh.isolation = isovalue;
+            }
+        }
+        this.updateModel = () => {
+            let mesh = this.scene.getObjectByName('mesh');
+            if(mesh==null){
+                let mesh = new MarchingCubes(this.size);
+                mesh.name = 'mesh';
+                if(this.textureOption==0){
+                    mesh.material = 'MeshNormalMaterial';
+                }
+                else if(this.textureOption==1){
+                    mesh.material = 'MeshNormalMaterial';
+                }
+                mesh.isolation = this.threshold;
+                mesh.field = this.databuffer;
+            }
+        }
+        this.download = () => {
+            mesh.generateGeometry();
+            return mesh;
+        }
+
         this.renderScene()
     }
 }

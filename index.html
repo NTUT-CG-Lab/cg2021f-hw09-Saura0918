@@ -159,7 +159,7 @@
     <script src="js/scoreoutputer.min.js"></script>
     <script>
         // 建構子 ScoreOutputer 接受一個字串，該字串為 csv 的檔案名稱
-        var so = new ScoreOutputer("109114514");
+        var so = new ScoreOutputer("107590002");
         so.installCSS(function () {
             // 安裝 bootstrap 的 css，如果在 html 上方引用 bootstrap 5.1.1 的話就不用使用 installCSS ，注意一定要 bootstrap css 5.1.1 版
             // installCSS 接收一個 callback 當作參數，作為成功安裝 bootstrap css 的回呼函式
@@ -207,6 +207,7 @@
     <script type="module">
 
         import { threejsViewer } from './jsm/threejsViewer.js'
+        import { PLYExporter } from "./threejs/examples/jsm/exporters/PLYExporter.js";
         import { STLExporter } from "./threejs/examples/jsm/exporters/STLExporter.js";
 
         const fileRegex = /(\w+)_(\d+)x(\d+)x(\d+)_(\w+)\.*/;
@@ -235,30 +236,90 @@
             })
 
             let elements = document.getElementsByName('settingForm')
-
+            let values,width,height,depth,byte,max;
+            let selectedTextureIndex =0;
+            let isovalue = 75;
+            let data = null;
+            let paddingData = null;
             // RAW文件讀取
             elements[0].addEventListener('change', (evt) => {
+                let fr = new FileReader();
 
+                let files = evt.target.files;
+                if(files.length <= 0){
+                    return 
+                }    
+
+                let file = evt.target.files[0];
+
+                let filename = file.name;
+
+                filename = filename.split('.');
+                let values = filename[0].split('_');
+
+                let width = values[1];
+                let height = values[2];
+                let depth = values[3];
+                let byte = values[4];
+
+                let max = Math.max(width, height, depth);
+
+                let data = null;
+                let paddingData = null;
+                console.log('長，寬，高:',width,'，',height,'，',depth);
+                fr.onload = () => {
+                    let result = fr.result;
+                    if(byte == 'uint8'){
+                        console.log("unit:", byte);
+                        data = new Uint8Array(result);             
+                        paddingData = new Uint8Array(max * max * max);
+                        paddingData = data;
+                        //modelView.loadData(paddingData,max, 75)
+                        modelView.loadData(paddingData, max, isovalue, selectedTextureIndex);
+                    }
+                }
+
+                fr.readAsArrayBuffer(file);
             })
 
             // 模型資料下載
             elements[1].addEventListener('click', (evt) => {
+                let exporter = new STLExporter();
+                let mesh = modelView.download();
+                let result = exporter.parse(mesh, {binary: true});
+               // let blob = new Blob([result],type:'application/octet-stream');
+                //let result = exporter.parse(mesh, {binary: false})
+                //let blob = new Blob([result], type:'text/plain')
 
+                let dlLink = document.createElement('a');
+                dlLink.href = URL.createObjectURL(blob);
+                dlLink.click();
             })
 
             // 閥值設定
             elements[2].addEventListener('click', (evt) => {
+                isovalue = parseInt((evt.srcElement.value)/1000*255);
+                console.log('閥值:'+isovalue+'/255');
+                document.getElementById('isovalueSlider').innerHTML ='閥值:'+isovalue+'/255';
+                modelView.threshold = isovalue;
 
+                console.log(isovalue);
+                modelView.loadData(paddingData, max, isovalue,selectedTextureIndex);
             })
 
             // 紋理設置
             elements[3].addEventListener('change', (evt) => {
-
+                selectedTextureIndex = evt.srcElement.value;
+                console.log(selectedTextureIndex);
+                //
+                modelView.loadData(paddingData, max, isovalue,selectedTextureIndex);
             })
 
             // 模型網格顯示
             elements[4].addEventListener('change', (evt) => {
-
+                let exporter = new STLExporter();
+                let mesh = modelView.download();
+                let result = exporter.parse(mesh, {binary:true});
             })
         }
 
